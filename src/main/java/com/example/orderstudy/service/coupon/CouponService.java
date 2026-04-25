@@ -3,7 +3,11 @@ package com.example.orderstudy.service.coupon;
 import com.example.orderstudy.domain.coupon.CouponPolicy;
 import com.example.orderstudy.domain.coupon.UserCoupon;
 import com.example.orderstudy.domain.user.User;
-import com.example.orderstudy.dto.coupon.CouponDtos;
+import com.example.orderstudy.dto.coupon.CouponPolicyResponse;
+import com.example.orderstudy.dto.coupon.CreateCouponPolicyRequest;
+import com.example.orderstudy.dto.coupon.IssueCouponRequest;
+import com.example.orderstudy.dto.coupon.IssueCouponResponse;
+import com.example.orderstudy.dto.coupon.UserCouponResponse;
 import com.example.orderstudy.exception.BusinessException;
 import com.example.orderstudy.exception.ErrorCode;
 import com.example.orderstudy.repository.coupon.CouponPolicyRepository;
@@ -32,7 +36,7 @@ public class CouponService {
     }
 
     @Transactional
-    public CouponDtos.CouponPolicyResponse createPolicy(CouponDtos.CreateCouponPolicyRequest request) {
+    public CouponPolicyResponse createPolicy(CreateCouponPolicyRequest request) {
         CouponPolicy policy = CouponPolicy.create(
                 request.name(),
                 request.discountType(),
@@ -41,11 +45,11 @@ public class CouponService {
                 request.startedAt(),
                 request.endedAt()
         );
-        return CouponDtos.CouponPolicyResponse.from(couponPolicyRepository.save(policy));
+        return CouponPolicyResponse.from(couponPolicyRepository.save(policy));
     }
 
     @Transactional
-    public CouponDtos.IssueCouponResponse issue(CouponDtos.IssueCouponRequest request) {
+    public IssueCouponResponse issue(IssueCouponRequest request) {
         LocalDateTime now = LocalDateTime.now(clock);
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -66,20 +70,20 @@ public class CouponService {
 
         try {
             UserCoupon userCoupon = userCouponRepository.saveAndFlush(UserCoupon.issue(user, policy, now));
-            return CouponDtos.IssueCouponResponse.from(userCoupon);
+            return IssueCouponResponse.from(userCoupon);
         } catch (DataIntegrityViolationException exception) {
             throw new BusinessException(ErrorCode.DUPLICATED_COUPON_ISSUE);
         }
     }
 
     @Transactional(readOnly = true)
-    public List<CouponDtos.UserCouponResponse> findUserCoupons(Long userId) {
+    public List<UserCouponResponse> findUserCoupons(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         return userCouponRepository.findByUserIdOrderByIssuedAtDesc(userId)
                 .stream()
-                .map(CouponDtos.UserCouponResponse::from)
+                .map(UserCouponResponse::from)
                 .toList();
     }
 }

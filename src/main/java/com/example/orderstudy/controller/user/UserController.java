@@ -1,6 +1,7 @@
 package com.example.orderstudy.controller.user;
 
-import com.example.orderstudy.dto.user.UserDtos;
+import com.example.orderstudy.dto.user.CreateUserRequest;
+import com.example.orderstudy.dto.user.UserResponse;
 import com.example.orderstudy.service.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDtos.UserResponse create(@Valid @RequestBody UserDtos.CreateUserRequest request) {
+    public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
         return userService.create(request);
     }
 }

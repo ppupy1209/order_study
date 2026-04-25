@@ -1,6 +1,9 @@
 package com.example.orderstudy.controller.order;
 
-import com.example.orderstudy.dto.order.OrderDtos;
+import com.example.orderstudy.dto.order.CancelOrderResponse;
+import com.example.orderstudy.dto.order.CreateOrderRequest;
+import com.example.orderstudy.dto.order.CreateOrderResponse;
+import com.example.orderstudy.dto.order.OrderResponse;
 import com.example.orderstudy.service.order.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,17 +27,17 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderDtos.CreateOrderResponse create(@Valid @RequestBody OrderDtos.CreateOrderRequest request) {
+    public CreateOrderResponse create(@Valid @RequestBody CreateOrderRequest request) {
         return orderService.create(request);
     }
 
     @GetMapping("/{orderId}")
-    public OrderDtos.OrderResponse findById(@PathVariable Long orderId) {
+    public OrderResponse findById(@PathVariable Long orderId) {
         return orderService.findById(orderId);
     }
 
     @PatchMapping("/{orderId}/cancel")
-    public OrderDtos.CancelOrderResponse cancel(@PathVariable Long orderId) {
+    public CancelOrderResponse cancel(@PathVariable Long orderId) {
         return orderService.cancel(orderId);
     }
 }

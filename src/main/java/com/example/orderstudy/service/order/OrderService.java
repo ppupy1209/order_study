@@ -6,7 +6,10 @@ import com.example.orderstudy.domain.order.Order;
 import com.example.orderstudy.domain.order.OrderStatus;
 import com.example.orderstudy.domain.product.Product;
 import com.example.orderstudy.domain.user.User;
-import com.example.orderstudy.dto.order.OrderDtos;
+import com.example.orderstudy.dto.order.CancelOrderResponse;
+import com.example.orderstudy.dto.order.CreateOrderRequest;
+import com.example.orderstudy.dto.order.CreateOrderResponse;
+import com.example.orderstudy.dto.order.OrderResponse;
 import com.example.orderstudy.exception.BusinessException;
 import com.example.orderstudy.exception.ErrorCode;
 import com.example.orderstudy.repository.coupon.UserCouponRepository;
@@ -36,7 +39,7 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDtos.CreateOrderResponse create(OrderDtos.CreateOrderRequest request) {
+    public CreateOrderResponse create(CreateOrderRequest request) {
         if (request.quantity() < 1) {
             throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
         }
@@ -69,18 +72,18 @@ public class OrderService {
 
         long finalPrice = Math.max(originalPrice - discountAmount, 0);
         Order order = orderRepository.save(Order.create(user, product, userCoupon, request.quantity(), originalPrice, discountAmount, finalPrice));
-        return OrderDtos.CreateOrderResponse.from(order);
+        return CreateOrderResponse.from(order);
     }
 
     @Transactional(readOnly = true)
-    public OrderDtos.OrderResponse findById(Long orderId) {
+    public OrderResponse findById(Long orderId) {
         Order order = orderRepository.findWithRelationsById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
-        return OrderDtos.OrderResponse.from(order);
+        return OrderResponse.from(order);
     }
 
     @Transactional
-    public OrderDtos.CancelOrderResponse cancel(Long orderId) {
+    public CancelOrderResponse cancel(Long orderId) {
         LocalDateTime now = LocalDateTime.now(clock);
         Order order = orderRepository.findWithRelationsById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
@@ -97,7 +100,7 @@ public class OrderService {
         if (order.getUserCoupon() != null) {
             userCouponRepository.restoreIssued(order.getUserCoupon().getId());
         }
-        return new OrderDtos.CancelOrderResponse(order.getId(), OrderStatus.CANCELED, now);
+        return new CancelOrderResponse(order.getId(), OrderStatus.CANCELED, now);
     }
 
     private void validateCoupon(UserCoupon userCoupon, Long userId, LocalDateTime now) {

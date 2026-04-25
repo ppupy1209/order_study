@@ -1,6 +1,7 @@
 package com.example.orderstudy.controller.product;
 
-import com.example.orderstudy.dto.product.ProductDtos;
+import com.example.orderstudy.dto.product.CreateProductRequest;
+import com.example.orderstudy.dto.product.ProductResponse;
 import com.example.orderstudy.service.product.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProductDtos.ProductResponse create(@Valid @RequestBody ProductDtos.CreateProductRequest request) {
+    public ProductResponse create(@Valid @RequestBody CreateProductRequest request) {
         return productService.create(request);
     }
 }

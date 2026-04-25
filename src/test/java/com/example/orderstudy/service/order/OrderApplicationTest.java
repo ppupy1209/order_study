@@ -3,23 +3,25 @@ package com.example.orderstudy.service.order;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.example.orderstudy.exception.BusinessException;
-import com.example.orderstudy.exception.ErrorCode;
-import com.example.orderstudy.dto.coupon.CouponDtos;
 import com.example.orderstudy.domain.coupon.CouponPolicy;
-import com.example.orderstudy.repository.coupon.CouponPolicyRepository;
-import com.example.orderstudy.service.coupon.CouponService;
 import com.example.orderstudy.domain.coupon.DiscountType;
 import com.example.orderstudy.domain.coupon.UserCoupon;
-import com.example.orderstudy.repository.coupon.UserCouponRepository;
 import com.example.orderstudy.domain.coupon.UserCouponStatus;
 import com.example.orderstudy.domain.order.OrderStatus;
 import com.example.orderstudy.domain.product.Product;
-import com.example.orderstudy.repository.product.ProductRepository;
 import com.example.orderstudy.domain.user.User;
-import com.example.orderstudy.dto.order.OrderDtos;
+import com.example.orderstudy.dto.order.CancelOrderResponse;
+import com.example.orderstudy.dto.order.CreateOrderRequest;
+import com.example.orderstudy.dto.order.CreateOrderResponse;
+import com.example.orderstudy.dto.coupon.IssueCouponRequest;
+import com.example.orderstudy.exception.BusinessException;
+import com.example.orderstudy.exception.ErrorCode;
+import com.example.orderstudy.repository.coupon.CouponPolicyRepository;
+import com.example.orderstudy.repository.coupon.UserCouponRepository;
 import com.example.orderstudy.repository.order.OrderRepository;
+import com.example.orderstudy.repository.product.ProductRepository;
 import com.example.orderstudy.repository.user.UserRepository;
+import com.example.orderstudy.service.coupon.CouponService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,8 +76,8 @@ class OrderApplicationTest {
         CouponPolicy policy = couponPolicyRepository.save(activePolicy("5000원 할인", DiscountType.FIXED_AMOUNT, 5_000, 100));
         UserCoupon coupon = userCouponRepository.save(UserCoupon.issue(user, policy, LocalDateTime.now()));
 
-        OrderDtos.CreateOrderResponse response = orderService.create(
-                new OrderDtos.CreateOrderRequest(user.getId(), product.getId(), 2, coupon.getId())
+        CreateOrderResponse response = orderService.create(
+                new CreateOrderRequest(user.getId(), product.getId(), 2, coupon.getId())
         );
 
         assertThat(response.originalPrice()).isEqualTo(200_000);
@@ -90,8 +92,8 @@ class OrderApplicationTest {
         User user = userRepository.save(User.create("userB"));
         Product product = productRepository.save(Product.create("마우스", 30_000, 5));
 
-        OrderDtos.CreateOrderResponse response = orderService.create(
-                new OrderDtos.CreateOrderRequest(user.getId(), product.getId(), 2, null)
+        CreateOrderResponse response = orderService.create(
+                new CreateOrderRequest(user.getId(), product.getId(), 2, null)
         );
 
         assertThat(response.originalPrice()).isEqualTo(60_000);
@@ -104,7 +106,7 @@ class OrderApplicationTest {
         User user = userRepository.save(User.create("userC"));
         Product product = productRepository.save(Product.create("모니터", 200_000, 1));
 
-        assertThatThrownBy(() -> orderService.create(new OrderDtos.CreateOrderRequest(user.getId(), product.getId(), 2, null)))
+        assertThatThrownBy(() -> orderService.create(new CreateOrderRequest(user.getId(), product.getId(), 2, null)))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.OUT_OF_STOCK);
@@ -116,11 +118,11 @@ class OrderApplicationTest {
         Product product = productRepository.save(Product.create("노트북", 1_000_000, 3));
         CouponPolicy policy = couponPolicyRepository.save(activePolicy("10% 할인", DiscountType.PERCENTAGE, 10, 100));
         UserCoupon coupon = userCouponRepository.save(UserCoupon.issue(user, policy, LocalDateTime.now()));
-        OrderDtos.CreateOrderResponse order = orderService.create(
-                new OrderDtos.CreateOrderRequest(user.getId(), product.getId(), 1, coupon.getId())
+        CreateOrderResponse order = orderService.create(
+                new CreateOrderRequest(user.getId(), product.getId(), 1, coupon.getId())
         );
 
-        OrderDtos.CancelOrderResponse response = orderService.cancel(order.orderId());
+        CancelOrderResponse response = orderService.cancel(order.orderId());
 
         assertThat(response.status()).isEqualTo(OrderStatus.CANCELED);
         assertThat(productRepository.findById(product.getId()).orElseThrow().getStockQuantity()).isEqualTo(3);
@@ -133,8 +135,8 @@ class OrderApplicationTest {
         Product product = productRepository.save(Product.create("취소 상품", 10_000, 3));
         CouponPolicy policy = couponPolicyRepository.save(activePolicy("취소 쿠폰", DiscountType.FIXED_AMOUNT, 1_000, 100));
         UserCoupon coupon = userCouponRepository.save(UserCoupon.issue(user, policy, LocalDateTime.now()));
-        OrderDtos.CreateOrderResponse order = orderService.create(
-                new OrderDtos.CreateOrderRequest(user.getId(), product.getId(), 1, coupon.getId())
+        CreateOrderResponse order = orderService.create(
+                new CreateOrderRequest(user.getId(), product.getId(), 1, coupon.getId())
         );
 
         AtomicInteger success = new AtomicInteger();
@@ -158,9 +160,9 @@ class OrderApplicationTest {
     void duplicateCouponIssueFails() {
         User user = userRepository.save(User.create("userE"));
         CouponPolicy policy = couponPolicyRepository.save(activePolicy("선착순", DiscountType.FIXED_AMOUNT, 1_000, 100));
-        couponService.issue(new CouponDtos.IssueCouponRequest(user.getId(), policy.getId()));
+        couponService.issue(new IssueCouponRequest(user.getId(), policy.getId()));
 
-        assertThatThrownBy(() -> couponService.issue(new CouponDtos.IssueCouponRequest(user.getId(), policy.getId())))
+        assertThatThrownBy(() -> couponService.issue(new IssueCouponRequest(user.getId(), policy.getId())))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.DUPLICATED_COUPON_ISSUE);
@@ -171,9 +173,9 @@ class OrderApplicationTest {
         User user1 = userRepository.save(User.create("userF1"));
         User user2 = userRepository.save(User.create("userF2"));
         CouponPolicy policy = couponPolicyRepository.save(activePolicy("한장", DiscountType.FIXED_AMOUNT, 1_000, 1));
-        couponService.issue(new CouponDtos.IssueCouponRequest(user1.getId(), policy.getId()));
+        couponService.issue(new IssueCouponRequest(user1.getId(), policy.getId()));
 
-        assertThatThrownBy(() -> couponService.issue(new CouponDtos.IssueCouponRequest(user2.getId(), policy.getId())))
+        assertThatThrownBy(() -> couponService.issue(new IssueCouponRequest(user2.getId(), policy.getId())))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.COUPON_SOLD_OUT);
@@ -194,7 +196,7 @@ class OrderApplicationTest {
         AtomicInteger failure = new AtomicInteger();
         runConcurrently(requestCount, index -> {
             try {
-                couponService.issue(new CouponDtos.IssueCouponRequest(savedUsers.get(index).getId(), policy.getId()));
+                couponService.issue(new IssueCouponRequest(savedUsers.get(index).getId(), policy.getId()));
                 success.incrementAndGet();
             } catch (BusinessException exception) {
                 failure.incrementAndGet();
@@ -223,7 +225,7 @@ class OrderApplicationTest {
         AtomicInteger failure = new AtomicInteger();
         runConcurrently(requestCount, index -> {
             try {
-                orderService.create(new OrderDtos.CreateOrderRequest(savedUsers.get(index).getId(), product.getId(), 1, null));
+                orderService.create(new CreateOrderRequest(savedUsers.get(index).getId(), product.getId(), 1, null));
                 success.incrementAndGet();
             } catch (BusinessException exception) {
                 failure.incrementAndGet();
@@ -247,7 +249,7 @@ class OrderApplicationTest {
         AtomicInteger failure = new AtomicInteger();
         runConcurrently(10, index -> {
             try {
-                orderService.create(new OrderDtos.CreateOrderRequest(user.getId(), product.getId(), 1, coupon.getId()));
+                orderService.create(new CreateOrderRequest(user.getId(), product.getId(), 1, coupon.getId()));
                 success.incrementAndGet();
             } catch (BusinessException exception) {
                 failure.incrementAndGet();

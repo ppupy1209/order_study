@@ -1,6 +1,10 @@
 package com.example.orderstudy.controller.coupon;
 
-import com.example.orderstudy.dto.coupon.CouponDtos;
+import com.example.orderstudy.dto.coupon.CouponPolicyResponse;
+import com.example.orderstudy.dto.coupon.CreateCouponPolicyRequest;
+import com.example.orderstudy.dto.coupon.IssueCouponRequest;
+import com.example.orderstudy.dto.coupon.IssueCouponResponse;
+import com.example.orderstudy.dto.coupon.UserCouponResponse;
 import com.example.orderstudy.service.coupon.CouponService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -23,18 +27,18 @@ public class CouponController {
 
     @PostMapping("/api/coupon-policies")
     @ResponseStatus(HttpStatus.CREATED)
-    public CouponDtos.CouponPolicyResponse createPolicy(@Valid @RequestBody CouponDtos.CreateCouponPolicyRequest request) {
+    public CouponPolicyResponse createPolicy(@Valid @RequestBody CreateCouponPolicyRequest request) {
         return couponService.createPolicy(request);
     }
 
     @PostMapping("/api/coupons/issue")
     @ResponseStatus(HttpStatus.CREATED)
-    public CouponDtos.IssueCouponResponse issue(@Valid @RequestBody CouponDtos.IssueCouponRequest request) {
+    public IssueCouponResponse issue(@Valid @RequestBody IssueCouponRequest request) {
         return couponService.issue(request);
     }
 
     @GetMapping("/api/users/{userId}/coupons")
-    public List<CouponDtos.UserCouponResponse> findUserCoupons(@PathVariable Long userId) {
+    public List<UserCouponResponse> findUserCoupons(@PathVariable Long userId) {
         return couponService.findUserCoupons(userId);
     }
 }
