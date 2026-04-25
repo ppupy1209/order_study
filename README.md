@@ -12,6 +12,41 @@
 - Docker, Docker Compose
 - JUnit 5, Testcontainers
 
+## 패키지 구조
+
+```text
+com.example.orderstudy
+├── config
+├── controller
+│   ├── coupon
+│   ├── order
+│   ├── product
+│   └── user
+├── domain
+│   ├── coupon
+│   ├── order
+│   ├── product
+│   └── user
+├── dto
+│   ├── coupon
+│   ├── order
+│   ├── product
+│   └── user
+├── exception
+├── repository
+│   ├── coupon
+│   ├── order
+│   ├── product
+│   └── user
+└── service
+    ├── coupon
+    ├── order
+    ├── product
+    └── user
+```
+
+도메인 객체 생성은 생성자 대신 `create`, `issue` 같은 정적 팩토리 메서드를 사용해 생성 의도를 드러내도록 구성했습니다.
+
 ## 실행 방법
 
 ```bash
